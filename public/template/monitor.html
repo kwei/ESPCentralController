@@ -3,12 +3,64 @@
     <title> monitor </title>
     <script src="{{url_for('static', filename='vendors/jquery/js/jquery-3.5.1.min.js')}}"></script>
     <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='vendors/bootstrap-5.0.0/css/bootstrap.min.css')}}"></link>
-    <script src="{{url_for('static', filename='js/esp.js')}}"></script>
-    <script src="{{url_for('static', filename='js/model.js')}}"></script>
-    <script src="{{url_for('static', filename='js/main.js')}}"></script>
     <script src="{{url_for('static', filename='vendors/bootstrap-5.0.0/js/bootstrap.min.js')}}"></script>
+    
 </head>
 <body>
-    
+    <span>ESP01</span> <pre id="monitorFileTableESP01"></pre>
+    <span>ESP02</span> <pre id="monitorFileTableESP02"></pre>
+    ESP04 <pre id="monitorFileTableESP04"></pre>
+    ESP05 <pre id="monitorFileTableESP05"></pre>
+    ESP06 <pre id="monitorFileTableESP06"></pre>
+    ESP07 <pre id="monitorFileTableESP07"></pre>
+    ESP08 <pre id="monitorFileTableESP08"></pre>
+    ESP09 <pre id="monitorFileTableESP09"></pre>
+    ESP10 <pre id="monitorFileTableESP10"></pre>
+    ESP11 <pre id="monitorFileTableESP11"></pre>
+    online <pre id="onlineTable"></pre>
+    <script type="text/javascript">
+        function replaceStatusUI(value) {
+            return (value == true) ? "🟢" : "🚨"
+        }
+        function reload(){
+            $.ajax({
+                type: 'GET',
+                url: '/getAlreadyESPFile',
+                timeout: 5000,
+                success: function(data){
+                    // $('#'+ssid+'rssi').html(fcreateRSSIList(data));
+                    for( i in data){
+                        for(j  in data[i]){
+                            data[i][j] = replaceStatusUI(data[i][j])
+                        }  
+                    }
+                    for(espId in data){
+                        $('#monitorFileTable'+espId).text(JSON.stringify(data[espId]))
+                    }
+                    
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown){
+                    console.log(ssid, "Something Wrong :( => ", errorThrown);
+                }
+            });
+        }
+        function reloadOnline(){
+            $.ajax({
+                type: 'GET',
+                url: '/getOnline',
+                timeout: 5000,
+                success: function(data){
+                    // $('#'+ssid+'rssi').html(fcreateRSSIList(data));
+                    console.log(JSON.stringify(data,null,4))
+                    $('#onlineTable').text(JSON.stringify(data,null,4))
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown){
+                }
+            });
+        }
+        window.setInterval(reload,1000)
+        window.setInterval(reloadOnline,1000)
+        
+    </script>
 </body>
 </html>
