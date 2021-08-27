@@ -6,6 +6,7 @@ import random
 import pickle
 import json
 import os
+from ESPMonitor.monitor import MonitorService
 
 session = requests.Session()
 adapter = requests.adapters.HTTPAdapter(pool_connections=50, pool_maxsize=50)
@@ -25,6 +26,7 @@ with open('espConfig.json', newline='') as espConfig:
 print("\nip_table: ", json.dumps(ip_table, indent=4, sort_keys=True))
 print("uploadFlag: ", uploadFlag, "\n")
 
+monitorService = MonitorService()
 
 def createResponse(data, status = 200):
 	res = ResponseData()
@@ -45,27 +47,6 @@ def testingData(espName):
 	data.remove("")
 	return data
 
-def save2DB(espName, scanResult):
-	# data = {
-	# 	'esp': 'ESP01',
-	# 	'measurements': {
-	# 		'KW': '-43dBm',
-	# 		'BNLAB': '-58dBm'
-	# 	},
-	# 	'createTime': '2021/2/24, 21:53:29'
-	# }
-
-	data = {}
-	if len(scanResult) != 0:
-		now = datetime.now()
-		data.update({'esp': str(espName)})
-		data.update({'measurements': scanResult})
-		data.update({'createTime': now.strftime("%Y/%m/%d, %H:%M:%S")})
-		jsonObj = json.dumps(data)
-		r = requests.post('http://127.0.0.1:5000/espMeasurements', data=jsonObj)
-		r = json.loads(r.text)
-		print("database api results: ", r)
-
 
 def dataPreprocess(data):
 	data = data.text.split(",")
@@ -77,14 +58,25 @@ def dataPreprocess(data):
 			scanResult.remove(item)
 	return scanResult
 
+@api.route('/getAlreadyESPFile', methods=['GET'])
+def getAlreadyESPFile():
+	return monitorService.getExist()
 
+@api.route('/getOnline', methods=['GET'])
+def getOnline():
+	return monitorService.getOnline()
 
 @api.route('/requestRSS/espHandle', methods=['GET'])
 def espHandlePage():
 	return render_template('espHandlePage.html')
 
+@api.route('/monitor', methods=['GET'])
+def espMonitorPage():
+	return render_template('monitor.html')
+
 @api.route('/requestUpload/id/<regex(".*"):deviceID>', methods=['GET'])
 def uploadCode(deviceID = None):
+	monitorService.setOnline(deviceID)
 	print("\nUpload flag for device: ", deviceID, ", flag: ", uploadFlag, "\n")
 	return uploadFlag 
 
@@ -101,6 +93,10 @@ def rss(deviceID = None, TargetID = None):
 	isExist = True
 	while(1):
 		isExist = os.path.isfile('./rssMeasurements/esp{}/RSS_{}_to_{}.pkl'.format(int (deviceID.split("ESP")[1]), deviceID, nextTargetID))
+		if deviceID == nextTargetID:
+			print('Exist: sameTargetId {}'.format(deviceID))
+			nextTargetID = espList[espList.index(nextTargetID)+1]
+			continue
 		if isExist:
 			print('Exist: rssMeasurements/esp{}/RSS_{}_to_{}.pkl'.format(int (deviceID.split("ESP")[1]), deviceID, nextTargetID))
 			if espList.index(nextTargetID)+1 >= len(espList):
@@ -117,46 +113,19 @@ def rss(deviceID = None, TargetID = None):
 		data = data.decode("utf-8")
 
 		if not data == "":
+			monitorService.setExist(deviceID,TargetID,True)
 			rssList = data.split(",")[:-1]
 			print("Data content: ", rssList)
 			f = open("RSS_{}_to_{}.pkl".format(deviceID, TargetID), "wb")
 			pickle.dump(rssList, f)
 			f.close()
 		else:
+			monitorService.setExist(deviceID,TargetID,False)
 			print("Data content: ", "Null")
 	
 	print("Next target device: ", nextTargetID, "\n")
 	return nextTargetID
 
 
-
-
-@api.route('/<espName>', methods=['GET'])
-def espReq(espName):
-	# print(espName)
-	try:
-		reqURL = 'http://' + ip_table[espName] + ':8001/' + espName + '/RSSI';
-		print(reqURL)
-		result = session.get(reqURL)
-
-		try:
-			print("res code: ", result.status_code)
-			if(result.status_code == requests.codes.ok):
-				scanResult = dataPreprocess(result)
-				print(scanResult)
-				save2DB(espName, scanResult)
-				return createResponse(scanResult)
-			else:
-				return createResponse(result.status_code, result.status_code)
-		except Exception as inst:
-			print(inst.args)
-	except Exception as inst:
-		print(inst.args)
-		# print("sleep")
-		return createResponse(inst.args, 500)
-
-	# === For test ===
-	# simulateData = testingData(espName)
-	# return createResponse(simulateData)
 
 
