@@ -1,0 +1,6 @@
+CREATE TABLE rssi_measurements (
+	id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+	esp TEXT NOT NULL,
+	measurements TEXT NOT NULL,
+	createtime TEXT NOT NULL
+);
