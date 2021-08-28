@@ -12,7 +12,8 @@
 		"ESP10": "192.168.182.110",
 		"ESP11": "192.168.182.111"
 	},
-	"uploadFlag": "1",
+	"uploadFlag": "0",
+	"MAXCache":20000,
 	"espMAC":{
 		"ESP01": "D8:BF:C0:0D:8B:8D",
 		"ESP02": "A4:CF:12:EF:A8:3A",

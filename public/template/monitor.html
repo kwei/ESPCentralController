@@ -7,19 +7,82 @@
     
 </head>
 <body>
-    ESP01 <pre id="monitorFileTableESP01"></pre>
-    ESP02 <pre id="monitorFileTableESP02"></pre>
-    ESP03 <pre id="monitorFileTableESP03"></pre>
-    ESP04 <pre id="monitorFileTableESP04"></pre>
-    ESP05 <pre id="monitorFileTableESP05"></pre>
-    ESP06 <pre id="monitorFileTableESP06"></pre>
-    ESP07 <pre id="monitorFileTableESP07"></pre>
-    ESP08 <pre id="monitorFileTableESP08"></pre>
-    ESP09 <pre id="monitorFileTableESP09"></pre>
-    ESP10 <pre id="monitorFileTableESP10"></pre>
-    ESP11 <pre id="monitorFileTableESP11"></pre>
+    <input id="startIndex" > </input> 
+    <input id="endIndex" > </input>
+    <button type="button" class="btn btn-primary" id="btnSave"> save </button> 
+    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#clearModel"> clear </button>
+    <div id="monitorFileTable"></div>
     online <pre id="onlineTable"></pre>
+    log <pre id="log"></pre>
+    <div class="modal" id="clearModel" tabindex="-1" role="dialog" aria-labelledby="clearModelLabel" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLabel">Remove?</h5>
+            <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" id="btnClear">OK</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close">NO</button>
+          </div>
+        </div>
+      </div>
+    </div>    
     <script type="text/javascript">
+        alreadyESPFile = null
+        espFileSize = null
+        let IdKeys = {
+            "ESP01": "❶",
+            "ESP02": "❷",
+            "ESP03": "❸",
+            "ESP04": "❹",
+            "ESP05": "❺",
+            "ESP06": "❻",
+            "ESP07": "❼",
+            "ESP08": "❽",
+            "ESP09": "❾",
+            "ESP10": "❿",
+            "ESP11": "⓫"
+        }
+        $('#btnClear').click(function(){
+            $.ajax({
+                type: 'GET',
+                url: '/file/clear',
+                timeout: 5000,
+                success: function(data){
+                    // $('#'+ssid+'rssi').html(fcreateRSSIList(data));
+                    $("#log").html(data)
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown){
+                    console.log(ssid, "Something Wrong :( => ", errorThrown);
+                }
+            });
+            $('#clearModel').modal('hide');
+        })
+        $('#btnSave').click(function(){
+            startIndex = $('#startIndex').val()
+            endIndex = $('#endIndex').val()
+            if(startIndex == "" ){
+                startIndex = "0"
+            }
+            if(endIndex == "" ){
+                endIndex = "0"
+            }
+            $.ajax({
+                type: 'GET',
+                url: '/file/clone?start='+startIndex+"&end="+endIndex,
+                timeout: 5000,
+                success: function(data){
+                    // $('#'+ssid+'rssi').html(fcreateRSSIList(data));
+                    $("#log").html(data)
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown){
+                    console.log(ssid, "Something Wrong :( => ", errorThrown);
+                }
+            });
+        })
         function replaceStatusUI(value) {
             return (value == true) ? "🟢" : "🔴"
         }
@@ -35,10 +98,22 @@
                             data[i][j] = replaceStatusUI(data[i][j])
                         }  
                     }
-                    for(espId in data){
-                        $('#monitorFileTable'+espId).text(JSON.stringify(data[espId]))
-                    }
+                    alreadyESPFile = data
+                    drawMonitorLog()
                     
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown){
+                    console.log(ssid, "Something Wrong :( => ", errorThrown);
+                }
+            });
+
+            $.ajax({
+                type: 'GET',
+                url: '/file/readFileSize',
+                timeout: 5000,
+                success: function(data){
+                    espFileSize = data
+                    drawMonitorLog()
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown){
                     console.log(ssid, "Something Wrong :( => ", errorThrown);
@@ -58,6 +133,43 @@
                 error: function (XMLHttpRequest, textStatus, errorThrown){
                 }
             });
+        }
+
+        function drawMonitorLog(){
+            if(espFileSize == null){
+                return
+            }
+            if(alreadyESPFile == null){
+                return
+            }
+            keyLength = Object.keys(IdKeys).length
+            htmlStr = "<table class=\"table table-hover\">"
+            htmlStr += " <thead class=\"thead-dark\">"
+            htmlStr += "<tr scope=\"col\">"
+            htmlStr += "<th style=\"width:"+(100/(1+keyLength))+"%\">"+ "#" +"</td>"
+            for(espId in IdKeys){
+                htmlStr += "<th style=\"width:"+(100/(1+keyLength))+"%\">"+ espId + "</td>"
+            }
+            htmlStr += "</tr>"
+            htmlStr += "</thead>"
+            htmlStr += "<tbody>"
+            for(espIdi in IdKeys){
+                row = {}
+                htmlStr += "<tr scope=\"col\">"
+                htmlStr += "<td>"+ espIdi + "</td>"
+                for(espIdj in IdKeys){
+                    if (alreadyESPFile[espIdi][espIdj] == undefined){
+                        htmlStr += "<td>"+ " :D" + "</td>"
+                    } else{
+                        htmlStr += "<td>"+ alreadyESPFile[espIdi][espIdj] + ":" + espFileSize[espIdi][espIdj] + "</td>"
+                    }
+                }
+                htmlStr += "</tr>"
+                
+            }
+            htmlStr += "</tbody>"
+            htmlStr += "</table>"
+            $('#monitorFileTable').html(htmlStr)
         }
         window.setInterval(reload,1000)
         window.setInterval(reloadOnline,1000)

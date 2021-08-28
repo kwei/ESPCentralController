@@ -1,21 +1,27 @@
 import json, os
+from ESPMonitor.fileHandler import FileHandler
 
 HaveMonitors = {}
 OnlineMonitors = {}
+fileHandler = FileHandler()
 class MonitorService:
     def __init__(self):
         with open('espConfig.json', newline='') as espConfig:
             configData = json.load(espConfig)
             _ipTable = configData['espTable']
+            MAXCache = configData['MAXCache']
             self.monitorIds = _ipTable.keys()
 
         for espi in self.monitorIds:
             for espj in self.monitorIds:
-                # print(espi, espj)
-                isExist = os.path.isfile('./RSS_{}_to_{}.pkl'.format(espi, espj))
-                print(espi, espj, isExist)
-                if isExist or espi == espj:
+                if espi == espj:
                     self.setExist(espi,espj,True)
+                    continue
+                if fileHandler.Len(espi,espj) >= MAXCache:
+                    self.setExist(espi,espj,True)
+                else:
+                    self.setExist(espi,espj,False)
+                
 
     def setOnline(self,Id):
         global OnlineMonitors
