@@ -124,7 +124,7 @@ def rss(deviceID = None, TargetID = None):
         data = data.decode("utf-8")
 
         if not data == "":
-            if fileHandler.Len(deviceID,TargetID) > MAXCache:
+            if fileHandler.Len(deviceID,TargetID) >= MAXCache:
                 monitorService.setExist(deviceID,TargetID,True)
             else:
                 monitorService.setExist(deviceID,TargetID,False)
@@ -132,7 +132,7 @@ def rss(deviceID = None, TargetID = None):
             print("Data content: ", rssList)
             fileHandler.Append(deviceID,TargetID,rssList)
         else:
-            if fileHandler.Len(deviceID,TargetID) > MAXCache:
+            if fileHandler.Len(deviceID,TargetID) >= MAXCache:
                 monitorService.setExist(deviceID,TargetID,True)
             else:
                 monitorService.setExist(deviceID,TargetID,False)
