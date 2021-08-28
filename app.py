@@ -5,9 +5,9 @@ from action.api import api
 from werkzeug.routing import BaseConverter
 
 class RegexConverter(BaseConverter):
-	def __init__(self, map, *args):
-		self.map = map
-		self.regex = args[0]
+    def __init__(self, map, *args):
+        self.map = map
+        self.regex = args[0]
 
 app.url_map.converters['regex'] = RegexConverter
 
@@ -17,15 +17,11 @@ app.register_blueprint(api)
 
 from werkzeug.routing import BaseConverter
 class RegexConverter(BaseConverter):
-	def __init__(self, map, *args):
-		self.map = map
-		self.regex = args[0]
+    def __init__(self, map, *args):
+        self.map = map
+        self.regex = args[0]
 
 
-
-@app.route("/")
-def mainPage():
-    return render_template('index.html')
 
 if __name__ == "__main__":
     app.run()
