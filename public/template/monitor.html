@@ -7,6 +7,10 @@
     
 </head>
 <body>
+    <input id="startIndex" > </input> <input id="endIndex" > </input>
+    <button type="button" class="btn btn-primary" id="btnSave"> save </button> 
+    <button type="button" class="btn btn-danger" id="btnClear"> clear </button>
+    <br/>
     <span>ESP01</span> <pre id="monitorFileTableESP01"></pre>
     <span>ESP02</span> <pre id="monitorFileTableESP02"></pre>
     ESP04 <pre id="monitorFileTableESP04"></pre>
@@ -18,7 +22,46 @@
     ESP10 <pre id="monitorFileTableESP10"></pre>
     ESP11 <pre id="monitorFileTableESP11"></pre>
     online <pre id="onlineTable"></pre>
+    log <pre id="log"></pre>    
     <script type="text/javascript">
+        alreadyESPFile = null
+        espFileSize = null
+        $('#btnClear').click(function(){
+            $.ajax({
+                type: 'GET',
+                url: '/file/clear',
+                timeout: 5000,
+                success: function(data){
+                    // $('#'+ssid+'rssi').html(fcreateRSSIList(data));
+                    $("#log").html(data)
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown){
+                    console.log(ssid, "Something Wrong :( => ", errorThrown);
+                }
+            });
+        })
+        $('#btnSave').click(function(){
+            startIndex = $('#startIndex').val()
+            endIndex = $('#endIndex').val()
+            if(startIndex == "" ){
+                startIndex = "0"
+            }
+            if(endIndex == "" ){
+                endIndex = "0"
+            }
+            $.ajax({
+                type: 'GET',
+                url: '/file/clone?start='+startIndex+"&end="+endIndex,
+                timeout: 5000,
+                success: function(data){
+                    // $('#'+ssid+'rssi').html(fcreateRSSIList(data));
+                    $("#log").html(data)
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown){
+                    console.log(ssid, "Something Wrong :( => ", errorThrown);
+                }
+            });
+        })
         function replaceStatusUI(value) {
             return (value == true) ? "🟢" : "🔴"
         }
@@ -34,10 +77,22 @@
                             data[i][j] = replaceStatusUI(data[i][j])
                         }  
                     }
-                    for(espId in data){
-                        $('#monitorFileTable'+espId).text(JSON.stringify(data[espId]))
-                    }
+                    alreadyESPFile = data
+                    drawMonitorLog()
                     
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown){
+                    console.log(ssid, "Something Wrong :( => ", errorThrown);
+                }
+            });
+
+            $.ajax({
+                type: 'GET',
+                url: '/file/readFileSize',
+                timeout: 5000,
+                success: function(data){
+                    espFileSize = data
+                    drawMonitorLog()
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown){
                     console.log(ssid, "Something Wrong :( => ", errorThrown);
@@ -57,6 +112,22 @@
                 error: function (XMLHttpRequest, textStatus, errorThrown){
                 }
             });
+        }
+
+        function drawMonitorLog(){
+            if(espFileSize == null){
+                return
+            }
+            if(alreadyESPFile == null){
+                return
+            }
+            for(espId in alreadyESPFile){
+                row = {}
+                for(_targetId in alreadyESPFile[espId]){
+                    row[_targetId] = alreadyESPFile[espId][_targetId] + ":" + espFileSize[espId][_targetId]
+                }
+                $('#monitorFileTable'+espId).text(JSON.stringify(row))
+            }
         }
         window.setInterval(reload,1000)
         window.setInterval(reloadOnline,1000)
