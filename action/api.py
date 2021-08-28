@@ -93,11 +93,8 @@ def rss(deviceID = None, TargetID = None):
 	isExist = True
 	while(1):
 		isExist = os.path.isfile('./rssMeasurements/esp{}/RSS_{}_to_{}.pkl'.format(int (deviceID.split("ESP")[1]), deviceID, nextTargetID))
-		if deviceID == nextTargetID:
-			print('Exist: sameTargetId {}'.format(deviceID))
-			nextTargetID = espList[espList.index(nextTargetID)+1]
-			continue
-		if isExist:
+		if isExist or deviceID == nextTargetID:
+			monitorService.setExist(deviceID,nextTargetID,True)
 			print('Exist: rssMeasurements/esp{}/RSS_{}_to_{}.pkl'.format(int (deviceID.split("ESP")[1]), deviceID, nextTargetID))
 			if espList.index(nextTargetID)+1 >= len(espList):
 				nextTargetID = espList[0]

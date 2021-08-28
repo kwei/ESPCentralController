@@ -1,4 +1,4 @@
-import json
+import json, os
 
 HaveMonitors = {}
 OnlineMonitors = {}
@@ -8,6 +8,14 @@ class MonitorService:
             configData = json.load(espConfig)
             _ipTable = configData['espTable']
             self.monitorIds = _ipTable.keys()
+
+        for espi in self.monitorIds:
+            for espj in self.monitorIds:
+                # print(espi, espj)
+                isExist = os.path.isfile('./RSS_{}_to_{}.pkl'.format(espi, espj))
+                print(espi, espj, isExist)
+                if isExist or espi == espj:
+                    self.setExist(espi,espj,True)
 
     def setOnline(self,Id):
         global OnlineMonitors
